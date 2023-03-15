@@ -1,15 +1,14 @@
-= Simplest way to replace H2 with real database for testing
+# Simplest way to replace H2 with real a database for testing
 
-This is sample code for [Simplest way to replace H2 with real database for testing](https://testcontainers.com/guides/replace-h2-with-real-database-for-testing) Guide.
+This is sample code for [Simplest way to replace H2 with a real database for testing](https://testcontainers.com/guides/replace-h2-with-real-database-for-testing) Guide.
 
-== 1. Setup Environment
+## 1. Setup Environment
 Make sure you have Java 8+ and a [compatible Docker environment](https://www.testcontainers.org/supported_docker_environment/) installed.
 If you are going to use Maven build tool then make sure Java 17+ is installed.
 
 For example:
 
-[source,shell]
-----
+```shell
 $ java -version
 openjdk version "17.0.4" 2022-07-19
 OpenJDK Runtime Environment Temurin-17.0.4+8 (build 17.0.4+8)
@@ -22,26 +21,26 @@ Server: Docker Desktop 4.12.0 (85629)
   API version:      1.41 (minimum version 1.12)
   Go version:       go1.17.11
 ...
-----
+```
 
-== 2. Setup Project
+## 2. Setup Project
 
 * Clone the repository
-[source,shell]
-----
+
+```shell
 git clone https://github.com/testcontainers/tc-guide-replace-h2-with-real-database-for-testing.git
 cd tc-guide-replace-h2-with-real-database-for-testing
-----
+```
+
 * Open the **tc-guide-replace-h2-with-real-database-for-testing** project in your favorite IDE.
 
-== 3. Run Tests
+## 3. Run Tests
 
 Run the command to run the tests.
 
-[source,shell]
-----
+```shell
 $ ./gradlew test //for Gradle
 $ ./mvnw verify  //for Maven
-----
+```
 
 The tests should pass.
