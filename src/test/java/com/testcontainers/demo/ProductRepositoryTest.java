@@ -2,21 +2,25 @@ package com.testcontainers.demo;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
+import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@TestPropertySource(properties = {
+    "spring.test.database.replace=none"
+})
 @Testcontainers
 class ProductRepositoryTest {
 
@@ -42,4 +46,12 @@ class ProductRepositoryTest {
         assertEquals(2, products.size());
     }
 
+    @Test
+    @Sql("/sql/seed-data.sql")
+    void shouldNotCreateAProductWithDuplicateCode() {
+        Product product = new Product(3L, "p101", "Test Product");
+        productRepository.createProductIfNotExists(product);
+        Optional<Product> optionalProduct = productRepository.findById(product.getId());
+        assertThat(optionalProduct).isEmpty();
+    }
 }
