@@ -1,9 +1,9 @@
 ---
-title: "GUIDE_TITLE"
-date: 2023-03-07T09:39:58+05:30
+title: "The simplest way to replace H2 with a real database for testing"
+date: 2023-03-17T09:39:58+05:30
 draft: false
-description: GUIDE_SHORT_DESCRIPTION
-repo: https://github.com/testcontainers/TC_GUIDE_REPO_NAME
+description: This guide will explain how to replace H2 in-memory database with a real database for testing using Testcontainers in the simplest way.
+repo: https://github.com/testcontainers/tc-guide-replace-h2-with-real-database-for-testing
 languages:
   - Java
 tags:
@@ -12,12 +12,14 @@ tags:
 ---
 :toc:
 :toclevels: 2
-:codebase: https://raw.githubusercontent.com/testcontainers/TC_GUIDE_REPO_NAME/main
+:codebase: https://raw.githubusercontent.com/testcontainers/tc-guide-replace-h2-with-real-database-for-testing/main
 
 In this guide you will learn how to
 
-* Perform task 1
-* Perform task 2
+* Replace an H2 in-memory database that is used for testing with the same type of database that you use in production
+* How to use the special Testcontainers JDBC URL to use database containers
+* Using the Testcontainers JUnit 5 Extension to initialize database
+* Test Spring Data JPA and JdbcTemplate based repositories
 
 == Prerequisites
 * Java 17+ / Go 1.20+ / Node 16.x etc
@@ -26,51 +28,274 @@ In this guide you will learn how to
 
 == What we are going to achieve in this guide
 
-Summary of what we are going to implement and learn in one or two paragraphs.
+We are going to create a sample SpringBoot application using *Spring Data JPA* and *PostgreSQL*.
+We will take a look at the common practice of using an H2 in-memory database for testing and
+understand the downsides of this approach. Then we will learn how we can replace this approach
+by testing with the same type of database (PostgreSQL in our case) that we use in production
+using Testcontainers JDBC URL. Finally, we will look into how we can use the same approach for testing
+*JdbcTemplate* based repositories as well.
 
 == Getting Started
-Explain how to create a new project with your favourite build tool support.
+You can create a new Spring Boot project from https://start.spring.io/[Spring Initializr] by selecting
+the *Spring Data JPA*, *JDBC API*, *PostgreSQL Driver*, *H2 Database* and *Testcontainers* starters.
 
-Here is how you can include an inline code block:
+== Create JPA Entity and Spring Data JPA Repository
+
+First let us start with creating a JPA entity *Product.java*.
 
 [source,java]
 ----
-class Hello {
-    void method1() {
-        System.out.println("Hello");
-    }
+@Entity
+@Table(name = "products")
+public class Product {
+   @Id
+   private Long id;
+
+   @Column(nullable = false, unique = true)
+   private String code;
+
+   @Column(nullable = false)
+   private String name;
+
+   // setters and getters
 }
 ----
 
-== Step 1
-
-Here is how you can include entire file from sample code:
-
-[source,sql]
-----
-include::{codebase}/src/test/resources/init-db.sql[]
-----
-
-[WARNING]
-A warning message here.
-
-== Step 2
-
-Here is how you can include specific lines of code segments from sample code:
+Let us create a Spring Data JPA repository interface for the *Product* entity.
 
 [source,java]
 ----
-include::{codebase}/src/test/java/com/testcontainers/demo/LocalStackTest.java[lines="23..48,55..76"]
+import org.springframework.data.jpa.repository.JpaRepository;
+
+interface ProductRepository extends JpaRepository<Product, Long> {
+}
 ----
 
-[NOTE]
-An important note here.
+== Testing with H2 in-memory database
+
+One of the approaches for testing database repositories is using lightweight databases such as H2 or HSQL
+as in-memory databases while using a different database like PostgreSQL, MySQL or Oracle in production.
+
+The drawbacks of using a different database for testing are:
+
+* The test database might not support all the features of your production database
+* The SQL query syntax might not be compatible with both in-memory database and your production database.
+* Testing with a different database than what you use for production will not give you complete confidence in your test suite.
+
+But still, in-memory databases like H2 are being predominantly used for testing because of their ease of use.
+
+Let us see how we can write tests for our *ProductRepository* using H2.
+
+[source,java]
+----
+@DataJpaTest
+class ProductRepositoryTest {
+
+   @Autowired
+   ProductRepository productRepository;
+
+   @Test
+   @Sql("classpath:/sql/seed-data.sql")
+   void shouldGetAllProducts() {
+       List<Product> products = productRepository.findAll();
+       assertEquals(2, products.size());
+   }
+}
+----
+
+If you run this test, by default Spring Boot is going to use an in-memory database if any in-memory database
+driver is available on classpath. As we have added the H2 database driver,
+the *ProductRepositoryTest* will be executed using the H2 in-memory database.
+
+We are using the *@Sql* annotation provided by Spring to initialize sample data required for our test,
+calling the repository method and asserting the expected result.
+
+But the challenge comes when we want to use features supported only by our production database,
+but not by H2 database.
+
+For example, let us imagine we want to implement a feature where we want to create a new product
+if a product with given code does not already exist, otherwise don’t create a new product.
+
+In PostgreSQL we can implement this using the following query:
+
+[source,sql]
+----
+INSERT INTO products(id, code, name) VALUES(?,?,?) ON CONFLICT DO NOTHING;
+----
+
+But the same query doesn't work with H2 by default. You can run H2 with PostgreSQL compatibility mode
+to support PostgreSQL syntax but still not all the features are supported by H2.
+
+The inverse scenario is also possible where some query works fine with H2 but not in PostgreSQL.
+For example, H2 supports the *ROWNUM()* function where PostgreSQL doesn't.
+So even if you write tests for repositories using H2 database there is no guarantee that your code works
+in the same way with the production database, and you will need to verify after deploying your application
+which defeats the whole purpose of writing automated tests
+
+Now, let us see how simple it is to replace the H2 database with a real Postgres database for testing using Testcontainers.
+
+== Testing with PostgreSQL database using Testcontainers
+In order to test with a PostgreSQL database instead of H2 database, first turn-off auto-configuration of in-memory database and use Testcontainers special JDBC URL as the DataSource URL.
+
+[source,java]
+----
+@DataJpaTest
+@TestPropertySource(properties = {
+  "spring.test.database.replace=none",
+  "spring.datasource.url=jdbc:tc:postgresql:15.2-alpine:///db"
+})
+class ProductRepositoryTest {
+
+   @Autowired
+   private ProductRepository productRepository;
+
+   @Test
+   @Sql("classpath:/sql/seed-data.sql")
+   void shouldGetAllProducts() {
+       List<Product> products = productRepository.findAll();
+       assertEquals(2, products.size());
+   }
+}
+----
+
+Now if you run the test, you can see in the console logs that our test is using a PostgreSQL database
+instead of the H2 in-memory database. *It is as simple as that!*
+
+Let us understand how this test works.
+
+We have turned-off the auto-configuration of *DataSource* bean using in-memory database by
+adding *spring.test.database.replace=none* property and configured *spring.datasource.url* property
+to the special Testcontainers JDBC URL.
+
+If we have Testcontainers and the appropriate JDBC driver on the classpath, we can simply use
+the special JDBC connection URLs to get a fresh containerized instance of the database each time
+the application starts up.
+
+The actual PostgreSQL JDBC URL looks like: *jdbc:postgresql://localhost:5432/postgres*
+
+To get the special JDBC URL, insert *tc:* after *jdbc:* as follows.
+(Note that the hostname, port and database name will be ignored;
+so you can leave these as-is or set them to any value.)
+
+[source]
+----
+jdbc:tc:postgresql:///db
+----
+
+We can also indicate which version of PostgreSQL database to use by specifying the Docker image tag after *postgresql* as follows:
+
+[source]
+----
+jdbc:tc:postgresql:15.2-alpine:///db
+----
+
+Here we have appended the tag *15.2-alpine* to *postgresql* so that our test will use a PostgreSQL container
+created from *postgres:15.2-alpine* image.
+
+You can also initialize the database using a SQL script by passing *TC_INITSCRIPT* parameter as follows:
+
+[source]
+----
+jdbc:tc:postgresql:15.2-alpine:///db?TC_INITSCRIPT=sql/init-db.sql
+----
+
+Testcontainers will automatically execute the SQL script that was specified using the *TC_INITSCRIPT* parameter.
+However, ideally you should be using a proper database migration tool like *Flyway* or *Liquibase*.
+
+The special JDBC URL also works for other databases such as *MySQL*, *PostGIS*, *YugabyteDB*, *CockroachDB* etc.
+
+== Initializing the database container using Testcontainers and JUnit
+
+If using special JDBC URL doesn't meet your needs, or you need more control over the container creation,
+then you can use the JUnit 5 Testcontainers Extension as follows:
+
+[source,java]
+----
+@DataJpaTest
+@TestPropertySource(properties = {
+    "spring.test.database.replace=none"
+})
+@Testcontainers
+class ProductRepositoryTest {
+
+   @Container
+   static PostgreSQLContainer<?> postgres =
+           new PostgreSQLContainer<>("postgres:15.2-alpine")
+                   .withInitScript("sql/init-db.sql");
+
+   @DynamicPropertySource
+   static void configureProperties(DynamicPropertyRegistry registry) {
+       registry.add("spring.datasource.url", postgres::getJdbcUrl);
+       registry.add("spring.datasource.username", postgres::getUsername);
+       registry.add("spring.datasource.password", postgres::getPassword);
+   }
+
+   @Autowired
+   ProductRepository productRepository;
+
+   @Test
+   @Sql("/sql/seed-data.sql")
+   void shouldGetAllProducts() {
+       List<Product> products = productRepository.findAll();
+       assertEquals(2, products.size());
+   }
+}
+----
+
+Here we have used the Testcontainers JUnit 5 extension annotations *@Testcontainers* and *@Container*
+to start *PostgreSQLContainer* and registered the datasource properties with Spring Boot using
+the dynamic property registration method through the *@DynamicPropertySource* annotation.
+
+== Testing JdbcTemplate based repositories
+In the previous section we have seen how to test Spring Data JPA repositories with a real database
+using Testcontainers. The same approach works for repositories using JdbcTemplate as well.
+
+[source,java]
+----
+@JdbcTest
+@TestPropertySource(properties = {
+  "spring.test.database.replace=none",
+  "spring.datasource.url=jdbc:tc:postgresql:15.2-alpine:///db?TC_INITSCRIPT=sql/init-db.sql"
+})
+class JdbcProductRepositoryTest {
+
+   @Autowired
+   private JdbcTemplate jdbcTemplate;
+
+   private JdbcProductRepository productRepo;
+
+   @BeforeEach
+   void setUp() {
+       productRepo = new JdbcProductRepository(jdbcTemplate);
+   }
+
+   @Test
+   @Sql("classpath:/sql/seed-data.sql")
+   void shouldGetAllProducts() {
+       List<Product> products = productRepo.getAllProducts();
+       assertEquals(2, products.size());
+   }
+}
+----
+
+We are using Spring Boot JDBC slice test annotation *@JdbcTest* to test the *JdbcTemplate* based repository
+and configured the Testcontainers special JDBC URL just as we did for the Spring Data JPA repository tests.
+This test will run by using the PostgreSQL database container created from the *postgres:15.2-alpine* image
+and initialized by running the *sql/init-db.sql* script.
 
 == Summary
-Summary of what we have learned and add call-to-action.
+We have looked into how to test Spring Data JPA repositories using H2 in-memory database and talked about
+the drawbacks of using different (in-memory) databases for testing while using a different type of database
+in production.
+
+Then we learned about how simply we can replace H2 database with a real database for testing using
+Testcontainers special JDBC URL. We also looked at using Testcontainers JUnit 5 extension annotations
+to spin up the database for testing which gives more control over the lifecycle of the database container.
 
 To learn more about Testcontainers visit http://testcontainers.com
 
 == Further Reading
+* https://www.testcontainers.org/modules/databases/jdbc/
+* https://testcontainers.com/guides/testing-spring-boot-rest-api-using-testcontainers/
 * https://testcontainers.com/guides/introducing-testcontainers/
-* https://www.testcontainers.org/quickstart/junit_5_quickstart/
+* https://www.testcontainers.org/modules/databases/postgres/

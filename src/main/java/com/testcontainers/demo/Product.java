@@ -1,5 +1,6 @@
 package com.testcontainers.demo;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -9,7 +10,11 @@ import jakarta.persistence.Table;
 public class Product {
     @Id
     private Long id;
+
+    @Column(nullable = false, unique = true)
     private String code;
+
+    @Column(nullable = false)
     private String name;
 
     public Product() {

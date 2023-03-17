@@ -1,6 +1,6 @@
-# Simplest way to replace H2 with real a database for testing
+# The simplest way to replace H2 with a real database for testing
 
-This is sample code for [Simplest way to replace H2 with a real database for testing](https://testcontainers.com/guides/replace-h2-with-real-database-for-testing) Guide.
+This is sample code for [The simplest way to replace H2 with a real database for testing](https://testcontainers.com/guides/replace-h2-with-real-database-for-testing) Guide.
 
 ## 1. Setup Environment
 Make sure you have Java 8+ and a [compatible Docker environment](https://www.testcontainers.org/supported_docker_environment/) installed.
