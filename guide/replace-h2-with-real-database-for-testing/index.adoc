@@ -9,6 +9,7 @@ languages:
 tags:
   - spring-boot
   - postgresql
+  - h2
 ---
 :toc:
 :toclevels: 2
@@ -18,7 +19,7 @@ In this guide you will learn how to
 
 * Replace an H2 in-memory database that is used for testing with the same type of database that you use in production
 * How to use the special Testcontainers JDBC URL to use database containers
-* Using the Testcontainers JUnit 5 Extension to initialize database
+* Use the Testcontainers JUnit 5 Extension to initialize database
 * Test Spring Data JPA and JdbcTemplate based repositories
 
 == Prerequisites
@@ -130,12 +131,13 @@ The inverse scenario is also possible where some query works fine with H2 but no
 For example, H2 supports the *ROWNUM()* function where PostgreSQL doesn't.
 So even if you write tests for repositories using H2 database there is no guarantee that your code works
 in the same way with the production database, and you will need to verify after deploying your application
-which defeats the whole purpose of writing automated tests
+which defeats the whole purpose of writing automated tests.
 
 Now, let us see how simple it is to replace the H2 database with a real Postgres database for testing using Testcontainers.
 
 == Testing with PostgreSQL database using Testcontainers
-In order to test with a PostgreSQL database instead of H2 database, first turn-off auto-configuration of in-memory database and use Testcontainers special JDBC URL as the DataSource URL.
+In order to test with a PostgreSQL database instead of H2 database, we need to turn-off autoconfiguration of
+in-memory database and use Testcontainers *special JDBC URL* as the DataSource URL.
 
 [source,java]
 ----
@@ -163,7 +165,7 @@ instead of the H2 in-memory database. *It is as simple as that!*
 
 Let us understand how this test works.
 
-We have turned-off the auto-configuration of *DataSource* bean using in-memory database by
+We have turned-off the autoconfiguration of *DataSource* bean using in-memory database by
 adding *spring.test.database.replace=none* property and configured *spring.datasource.url* property
 to the special Testcontainers JDBC URL.
 
@@ -248,7 +250,7 @@ the dynamic property registration method through the *@DynamicPropertySource* an
 
 == Testing JdbcTemplate based repositories
 In the previous section we have seen how to test Spring Data JPA repositories with a real database
-using Testcontainers. The same approach works for repositories using JdbcTemplate as well.
+using Testcontainers. The same approach works for repositories using *JdbcTemplate* as well.
 
 [source,java]
 ----
