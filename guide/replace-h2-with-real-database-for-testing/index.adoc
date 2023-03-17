@@ -124,8 +124,16 @@ In PostgreSQL we can implement this using the following query:
 INSERT INTO products(id, code, name) VALUES(?,?,?) ON CONFLICT DO NOTHING;
 ----
 
-But the same query doesn't work with H2 by default. You can run H2 with PostgreSQL compatibility mode
-to support PostgreSQL syntax but still not all the features are supported by H2.
+But the same query doesn't work with H2 by default.
+When you execute the above query with H2 then you will get the following exception:
+
+[source,shell]
+----
+Caused by: org.h2.jdbc.JdbcSQLException: Syntax error in SQL statement "INSERT INTO products (id, code, name) VALUES (?, ?, ?) ON[*] CONFLICT DO NOTHING";"
+----
+
+You can run H2 with PostgreSQL compatibility mode to support PostgreSQL syntax
+but still not all the features are supported by H2.
 
 The inverse scenario is also possible where some query works fine with H2 but not in PostgreSQL.
 For example, H2 supports the *ROWNUM()* function where PostgreSQL doesn't.
@@ -223,7 +231,9 @@ class ProductRepositoryTest {
    @Container
    static PostgreSQLContainer<?> postgres =
            new PostgreSQLContainer<>("postgres:15.2-alpine")
-                   .withInitScript("sql/init-db.sql");
+                   .withCopyFileToContainer(
+                        MountableFile.forClasspathResource("sql/init-db.sql"),
+                        "/docker-entrypoint-initdb.d/init-db.sql");
 
    @DynamicPropertySource
    static void configureProperties(DynamicPropertyRegistry registry) {

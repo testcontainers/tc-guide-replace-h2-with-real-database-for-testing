@@ -10,6 +10,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.MountableFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +28,9 @@ class ProductRepositoryTest {
     @Container
     static PostgreSQLContainer<?> postgres =
             new PostgreSQLContainer<>("postgres:15.2-alpine")
-                    .withInitScript("sql/init-db.sql");
+                    .withCopyFileToContainer(
+                            MountableFile.forClasspathResource("sql/init-db.sql"),
+                            "/docker-entrypoint-initdb.d/init-db.sql");
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
