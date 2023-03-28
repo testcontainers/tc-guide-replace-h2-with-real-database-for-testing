@@ -307,7 +307,6 @@ to spin up the database for testing which gives more control over the lifecycle 
 To learn more about Testcontainers visit http://testcontainers.com
 
 == Further Reading
-* https://www.testcontainers.org/modules/databases/jdbc/
-* https://testcontainers.com/guides/testing-spring-boot-rest-api-using-testcontainers/
-* https://testcontainers.com/guides/introducing-testcontainers/
-* https://www.testcontainers.org/modules/databases/postgres/
+* https://www.testcontainers.org/modules/databases/postgres/[Testcontainers Postgres Module]
+* https://www.testcontainers.org/modules/databases/jdbc/[Testcontainers JDBC Support]
+* https://testcontainers.com/guides/testing-spring-boot-rest-api-using-testcontainers/[Getting started with Testcontainers in a Java Spring Boot Project]
