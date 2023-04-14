@@ -6,13 +6,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 interface ProductRepository extends JpaRepository<Product, Long> {
-
-    @Modifying
-    @Query(value = """
+  @Modifying
+  @Query(
+    value = """
             insert into products(id, code, name) 
             values(:#{#p.id}, :#{#p.code}, :#{#p.name}) 
             ON CONFLICT DO NOTHING
             """,
-            nativeQuery = true)
-    void createProductIfNotExists(@Param("p") Product product);
+    nativeQuery = true
+  )
+  void createProductIfNotExists(@Param("p") Product product);
 }

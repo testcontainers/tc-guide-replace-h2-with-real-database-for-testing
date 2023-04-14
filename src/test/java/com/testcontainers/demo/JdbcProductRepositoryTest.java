@@ -1,5 +1,8 @@
 package com.testcontainers.demo;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,32 +11,29 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 @JdbcTest
-@TestPropertySource(properties = {
+@TestPropertySource(
+  properties = {
     "spring.test.database.replace=none",
-    "spring.datasource.url=jdbc:tc:postgresql:15.2-alpine:///db?TC_INITSCRIPT=sql/init-db.sql"
-})
+    "spring.datasource.url=jdbc:tc:postgresql:15.2-alpine:///db?TC_INITSCRIPT=sql/init-db.sql",
+  }
+)
 class JdbcProductRepositoryTest {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+  @Autowired
+  private JdbcTemplate jdbcTemplate;
 
-    private JdbcProductRepository productRepository;
+  private JdbcProductRepository productRepository;
 
-    @BeforeEach
-    void setUp() {
-        productRepository = new JdbcProductRepository(jdbcTemplate);
-    }
+  @BeforeEach
+  void setUp() {
+    productRepository = new JdbcProductRepository(jdbcTemplate);
+  }
 
-    @Test
-    @Sql("/sql/seed-data.sql")
-    void shouldGetAllProducts() {
-        List<Product> products = productRepository.getAllProducts();
-        assertEquals(2, products.size());
-    }
-
+  @Test
+  @Sql("/sql/seed-data.sql")
+  void shouldGetAllProducts() {
+    List<Product> products = productRepository.getAllProducts();
+    assertEquals(2, products.size());
+  }
 }
