@@ -23,7 +23,7 @@ In this guide you will learn how to
 * Test Spring Data JPA and JdbcTemplate based repositories
 
 == Prerequisites
-* Java 17+ / Go 1.20+ / Node 16.x etc
+* Java 17+
 * Your favorite IDE (Intellij IDEA, Eclipse, NetBeans, VS Code)
 * A Docker environment supported by Testcontainers https://www.testcontainers.org/supported_docker_environment/
 
