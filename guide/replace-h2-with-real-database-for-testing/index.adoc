@@ -15,7 +15,7 @@ tags:
 :toclevels: 2
 :codebase: https://raw.githubusercontent.com/testcontainers/tc-guide-replace-h2-with-real-database-for-testing/main
 
-In this guide you will learn how to
+In this guide, you will learn how to
 
 * Replace an H2 in-memory database that is used for testing with the same type of database that you use in production
 * How to use the special Testcontainers JDBC URL to use database containers
@@ -152,7 +152,7 @@ in-memory database and use Testcontainers *special JDBC URL* as the DataSource U
 @DataJpaTest
 @TestPropertySource(properties = {
   "spring.test.database.replace=none",
-  "spring.datasource.url=jdbc:tc:postgresql:15.2-alpine:///db"
+  "spring.datasource.url=jdbc:tc:postgresql:16-alpine:///db"
 })
 class ProductRepositoryTest {
 
@@ -196,17 +196,17 @@ We can also indicate which version of PostgreSQL database to use by specifying t
 
 [source]
 ----
-jdbc:tc:postgresql:15.2-alpine:///db
+jdbc:tc:postgresql:16-alpine:///db
 ----
 
-Here we have appended the tag *15.2-alpine* to *postgresql* so that our test will use a PostgreSQL container
-created from *postgres:15.2-alpine* image.
+Here we have appended the tag *16-alpine* to *postgresql* so that our test will use a PostgreSQL container
+created from *postgres:16-alpine* image.
 
-You can also initialize the database using a SQL script by passing *TC_INITSCRIPT* parameter as follows:
+You can also initialize the database using an SQL script by passing *TC_INITSCRIPT* parameter as follows:
 
 [source]
 ----
-jdbc:tc:postgresql:15.2-alpine:///db?TC_INITSCRIPT=sql/init-db.sql
+jdbc:tc:postgresql:16-alpine:///db?TC_INITSCRIPT=sql/init-db.sql
 ----
 
 Testcontainers will automatically execute the SQL script that was specified using the *TC_INITSCRIPT* parameter.
@@ -230,7 +230,7 @@ class ProductRepositoryTest {
 
    @Container
    static PostgreSQLContainer<?> postgres =
-      new PostgreSQLContainer<>("postgres:15.2-alpine")
+      new PostgreSQLContainer<>("postgres:16-alpine")
            .withCopyFileToContainer(
                MountableFile.forClasspathResource("sql/init-db.sql"),
                "/docker-entrypoint-initdb.d/init-db.sql");
@@ -267,7 +267,7 @@ using Testcontainers. The same approach works for repositories using *JdbcTempla
 @JdbcTest
 @TestPropertySource(properties = {
   "spring.test.database.replace=none",
-  "spring.datasource.url=jdbc:tc:postgresql:15.2-alpine:///db?TC_INITSCRIPT=sql/init-db.sql"
+  "spring.datasource.url=jdbc:tc:postgresql:16-alpine:///db?TC_INITSCRIPT=sql/init-db.sql"
 })
 class JdbcProductRepositoryTest {
 
@@ -292,7 +292,7 @@ class JdbcProductRepositoryTest {
 
 We are using Spring Boot JDBC slice test annotation *@JdbcTest* to test the *JdbcTemplate* based repository
 and configured the Testcontainers special JDBC URL just as we did for the Spring Data JPA repository tests.
-This test will run by using the PostgreSQL database container created from the *postgres:15.2-alpine* image
+This test will run by using the PostgreSQL database container created from the *postgres:16-alpine* image
 and initialized by running the *sql/init-db.sql* script.
 
 == Summary

@@ -13,7 +13,7 @@ import org.springframework.test.context.jdbc.Sql;
 @TestPropertySource(
   properties = {
     "spring.test.database.replace=none",
-    "spring.datasource.url=jdbc:tc:postgresql:15.2-alpine:///db?TC_INITSCRIPT=sql/init-db.sql",
+    "spring.datasource.url=jdbc:tc:postgresql:16-alpine:///db?TC_INITSCRIPT=sql/init-db.sql",
   }
 )
 class ProductRepositoryWithJdbcUrlTest {

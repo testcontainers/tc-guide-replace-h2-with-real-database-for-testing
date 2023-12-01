@@ -24,7 +24,7 @@ class ProductRepositoryTest {
 
   @Container
   static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
-    "postgres:15.2-alpine"
+    "postgres:16-alpine"
   )
     .withCopyFileToContainer(
       MountableFile.forClasspathResource("sql/init-db.sql"),
@@ -53,7 +53,9 @@ class ProductRepositoryTest {
   void shouldNotCreateAProductWithDuplicateCode() {
     Product product = new Product(3L, "p101", "Test Product");
     productRepository.createProductIfNotExists(product);
-    Optional<Product> optionalProduct = productRepository.findById(product.getId());
+    Optional<Product> optionalProduct = productRepository.findById(
+      product.getId()
+    );
     assertThat(optionalProduct).isEmpty();
   }
 }
